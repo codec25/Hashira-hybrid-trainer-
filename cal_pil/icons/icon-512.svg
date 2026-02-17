@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0b1420"/>
+  <rect x="44" y="44" width="424" height="424" rx="72" fill="#132436"/>
+  <circle cx="256" cy="256" r="138" fill="#38bdf8" opacity="0.2"/>
+  <path d="M256 116l91 150H165l91-150zm0 48l-37 64h74l-37-64z" fill="#38bdf8"/>
+  <text x="256" y="366" fill="#c9d1d9" font-size="54" text-anchor="middle" font-family="Arial, sans-serif">DUO</text>
+</svg>
