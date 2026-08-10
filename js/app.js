@@ -2,9 +2,78 @@
   const { RANKS, VERSES, DISCIPLINES_MOISE, DISCIPLINES_HER, DAY_TYPES, CAT, LIB } = window.HASHIRA_LIB;
   const { state, getTodayKey, yesterdayKey } = window.HASHIRA_STATE;
   const Timer = window.HASHIRA_TIMER;
+  const LS = window.HASHIRA_LS || {
+    getItem: function (k) { return localStorage.getItem(k); },
+    setItem: function (k, v) { localStorage.setItem(k, v); },
+    removeItem: function (k) { localStorage.removeItem(k); }
+  };
+
+  function getStoredColorTheme() {
+    try {
+      if (LS.getItem('hashira_field_visual_v4') !== 'ready') {
+        LS.setItem('jg_color_theme', 'sunlit');
+        LS.setItem('hashira_color_theme', 'sunlit');
+        LS.setItem('hashira_field_visual_v4', 'ready');
+        return 'sunlit';
+      }
+    } catch (e) {}
+    if (window.JG_COLOR_THEME && typeof window.JG_COLOR_THEME.read === 'function') {
+      return window.JG_COLOR_THEME.read();
+    }
+    try {
+      var k = LS.getItem('jg_color_theme');
+      if (k === 'sunlit' || k === 'dark') return k;
+      var h = LS.getItem('hashira_color_theme');
+      if (h === 'sunlit' || h === 'dark') return h;
+    } catch (e) {}
+    return 'sunlit';
+  }
+
+  function applyHashiraColorTheme(mode) {
+    if (window.JG_COLOR_THEME && typeof window.JG_COLOR_THEME.apply === 'function') {
+      window.JG_COLOR_THEME.apply(mode);
+      const sw = document.getElementById('hashira-theme-switch');
+      if (sw && window.JG_COLOR_THEME.syncSwitch) window.JG_COLOR_THEME.syncSwitch(sw);
+      return;
+    }
+    const sun = mode === 'sunlit';
+    if (sun) document.documentElement.setAttribute('data-theme', 'sunlit');
+    else document.documentElement.removeAttribute('data-theme');
+    try {
+      LS.setItem('jg_color_theme', sun ? 'sunlit' : 'dark');
+      LS.setItem('hashira_color_theme', sun ? 'sunlit' : 'dark');
+    } catch (e) {}
+    const meta = document.getElementById('meta-theme-color');
+    if (meta) {
+      meta.setAttribute('content', sun ? '#f3efe6' : '#0284c7');
+    }
+    const elDark = document.getElementById('theme-btn-dark');
+    const elSun = document.getElementById('theme-btn-sunlit');
+    if (elDark) elDark.setAttribute('aria-pressed', String(!sun));
+    if (elSun) elSun.setAttribute('aria-pressed', String(sun));
+  }
+
+  function setupColorThemeToggle() {
+    const sw = document.getElementById('hashira-theme-switch');
+    if (!sw) return;
+    if (window.JG_COLOR_THEME && typeof window.JG_COLOR_THEME.bindSegmentedSwitch === 'function') {
+      window.JG_COLOR_THEME.bindSegmentedSwitch(sw);
+      if (window.JG_COLOR_THEME.syncSwitch) window.JG_COLOR_THEME.syncSwitch(sw);
+      return;
+    }
+    if (sw.dataset.bound) return;
+    sw.dataset.bound = '1';
+    sw.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-color-theme]');
+      if (!btn || !sw.contains(btn)) return;
+      applyHashiraColorTheme(btn.getAttribute('data-color-theme') === 'sunlit' ? 'sunlit' : 'dark');
+    });
+  }
 
   let lastManualTimingEditAt = 0;
   let generationNonce = 0;
+  /** When set, checklist auto-check / reset uses this key (e.g. preset sessions). */
+  let activeChecklistPersistKey = null;
   function markManualTimingEdit(){ lastManualTimingEditAt = Date.now(); }
   function shouldAutoApplyTimings(){ return (Date.now() - lastManualTimingEditAt) > 8000; }
 
@@ -237,7 +306,7 @@
     const histMode = document.getElementById('history-mode').value;
     const histKey = `history_${discipline}_${lvl}_${day}_${equipMode}`;
     const yKey = yesterdayKey();
-    const hist = JSON.parse(localStorage.getItem(histKey) || '{}');
+    const hist = JSON.parse(LS.getItem(histKey) || '{}');
     const yesterdayKeys = hist?.[yKey] || [];
 
     let filtered = safeBase.slice();
@@ -256,7 +325,7 @@
       const k = keys.shift();
       delete hist[k];
     }
-    localStorage.setItem(histKey, JSON.stringify(hist));
+    LS.setItem(histKey, JSON.stringify(hist));
     return pick;
   }
 
@@ -315,14 +384,14 @@
     const athlete = document.getElementById('athlete-select').value;
     const discSel = document.getElementById('discipline-select');
 
-    const prev = localStorage.getItem('discipline') || discSel.value;
+    const prev = LS.getItem('discipline') || discSel.value;
     const list = (athlete === 'her') ? DISCIPLINES_HER : DISCIPLINES_MOISE;
 
     let next = prev;
     if (!list.some((x) => x.value === prev)) next = list[0].value;
 
     fillSelect(discSel, list, next);
-    localStorage.setItem('discipline', discSel.value);
+    LS.setItem('discipline', discSel.value);
 
     showEquipUI();
     updateDayTypeOptions();
@@ -335,19 +404,20 @@
     const val = document.getElementById('athlete-select').value;
     if (val === 'her') document.body.classList.add('theme-her');
     else document.body.classList.remove('theme-her');
+    applyHashiraColorTheme(document.documentElement.getAttribute('data-theme') === 'sunlit' ? 'sunlit' : 'dark');
     updateDisciplineOptions();
   }
 
   function updateDayTypeOptions() {
     const discipline = document.getElementById('discipline-select').value;
     const daySel = document.getElementById('day-type-select');
-    const current = localStorage.getItem('dayType') || daySel.value;
+    const current = LS.getItem('dayType') || daySel.value;
 
     const list = DAY_TYPES[discipline] || DAY_TYPES.calisthenics;
     const exists = list.some((x) => x.value === current);
     fillSelect(daySel, list, exists ? current : list[0].value);
 
-    localStorage.setItem('dayType', daySel.value);
+    LS.setItem('dayType', daySel.value);
   }
 
   function planKey() {
@@ -369,7 +439,7 @@
     const dayOptions = DAY_TYPES[discipline] || DAY_TYPES.calisthenics;
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-    const saved = JSON.parse(localStorage.getItem(planKey()) || 'null') || defaultPlanForDiscipline(discipline);
+    const saved = JSON.parse(LS.getItem(planKey()) || 'null') || defaultPlanForDiscipline(discipline);
 
     container.innerHTML = '';
     days.forEach((d, i) => {
@@ -403,7 +473,7 @@
       container.appendChild(row);
     });
 
-    const auto = (localStorage.getItem('autoSync') === 'true');
+    const auto = (LS.getItem('autoSync') === 'true');
     document.getElementById('auto-sync-day').checked = auto;
     if (auto) {
       const todayIdx = (new Date().getDay() + 6) % 7;
@@ -420,32 +490,242 @@
     const sel = document.getElementById(`plan-day-${todayIdx}`);
     if (!sel) return;
     document.getElementById('day-type-select').value = sel.value;
-    localStorage.setItem('dayType', sel.value);
+    LS.setItem('dayType', sel.value);
     generateChecklist();
   }
 
   function resetPlan() {
-    localStorage.removeItem(planKey());
+    LS.removeItem(planKey());
     renderPlanBuilder();
     saveSettings();
   }
 
+  function updateXpRankVisuals() {
+    const xp = Math.max(0, Math.floor(Number(state.xp) || 0));
+    let idx = 0;
+    for (let i = 0; i < RANKS.length; i++) {
+      if (xp >= RANKS[i].min) idx = i;
+    }
+    const cur = RANKS[idx];
+    const next = RANKS[idx + 1] || null;
+
+    let pct = 100;
+    let metaText = `${xp} XP`;
+    let nextText = 'Peak rank — keep stacking XP.';
+
+    if (next) {
+      const span = Math.max(1, next.min - cur.min);
+      const prog = Math.min(1, Math.max(0, (xp - cur.min) / span));
+      pct = Math.round(prog * 100);
+      metaText = `${xp} / ${next.min} XP`;
+      nextText = `Next: ${next.name} at ${next.min} XP`;
+    }
+
+    const nameHero = document.getElementById('rank-hero-name');
+    const nextHint = document.getElementById('rank-hero-next');
+    const fillHome = document.getElementById('xp-rank-bar-fill');
+    const metaHome = document.getElementById('xp-rank-bar-meta');
+    const track = document.getElementById('xp-rank-track');
+    const trainFill = document.getElementById('train-xp-bar-fill');
+    const trainMeta = document.getElementById('train-xp-strip-meta');
+    const trainPill = document.getElementById('train-rank-pill');
+
+    if (nameHero) nameHero.textContent = cur.name;
+    if (nextHint) nextHint.textContent = nextText;
+    if (fillHome) fillHome.style.width = `${pct}%`;
+    if (metaHome) metaHome.textContent = metaText;
+    if (track) track.setAttribute('aria-valuenow', String(pct));
+
+    if (trainFill) trainFill.style.width = `${pct}%`;
+    if (trainMeta) trainMeta.textContent = next ? `${xp} / ${next.min}` : `${xp} XP`;
+    if (trainPill) trainPill.textContent = cur.name;
+  }
+
   function updateStats() {
-    document.getElementById('xp-val').innerText = state.xp;
+    const xpEl = document.getElementById('xp-val');
+    const rankEl = document.getElementById('rank-val');
     let rank = RANKS[0].name;
     for (const r of RANKS) if (state.xp >= r.min) rank = r.name;
-    document.getElementById('rank-val').innerText = rank;
+    if (xpEl) xpEl.innerText = state.xp;
+    if (rankEl) rankEl.innerText = rank;
+    updateXpRankVisuals();
+    updateTrainProgressChip();
 
     const today = getTodayKey();
     const yes = state.doneDays[today] ? 'Yes' : 'No';
-    document.getElementById('today-status').innerText = yes;
-    document.getElementById('today-status').style.color = state.doneDays[today] ? 'var(--accent)' : 'var(--danger)';
+    const todayEl = document.getElementById('today-status');
+    if (todayEl) {
+      todayEl.innerText = yes;
+      todayEl.style.color = state.doneDays[today] ? 'var(--accent)' : 'var(--danger)';
+    }
 
     const dash = document.getElementById('today-dashboard-status');
     if (dash) {
       dash.innerText = state.doneDays[today] ? 'Done' : 'Not Done';
       dash.style.color = state.doneDays[today] ? 'var(--accent)' : 'var(--danger)';
     }
+    refreshHomePresetHint();
+  }
+
+  function escapeHtmlLite(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function refreshHomePresetHint() {
+    const body = document.getElementById('home-preset-body');
+    if (!body) return;
+    const P = window.HASHIRA_PRESETS;
+    if (!P || typeof P.getTodaysAssignedPreset !== 'function') {
+      body.innerHTML = '<p class="hint" style="margin:0">Presets unavailable.</p>';
+      return;
+    }
+    const p = P.getTodaysAssignedPreset();
+    if (!p) {
+      body.innerHTML = '<p class="section-lede section-lede--tight" style="margin:0">No weekday-assigned preset for today. Assign in <a href="#presets">Presets</a>.</p>';
+      return;
+    }
+    const idJson = JSON.stringify(p.id);
+    const name = escapeHtmlLite(p.name);
+    const cat = escapeHtmlLite(p.category);
+    body.innerHTML =
+      '<div class="home-preset-banner">' +
+      `<div class="preset-today-name">${name}</div>` +
+      `<div class="preset-today-meta text-dim">${cat}</div>` +
+      '<div class="preset-actions">' +
+      `<button type="button" class="btn-header" onclick="loadHashiraPresetById(${idJson})">Load session</button>` +
+      '<a class="btn-header btn-ghost" href="#presets" style="text-decoration:none;display:inline-block;text-align:center">Presets</a>' +
+      '<a class="btn-header btn-ghost" href="#train" style="text-decoration:none;display:inline-block;text-align:center">Train</a>' +
+      '</div></div>';
+  }
+
+  function applyEquipFromImport(discipline, equipMode) {
+    if (!discipline || !equipMode) return;
+    if (discipline === 'gym') LS.setItem('equipGym', String(equipMode));
+    else if (discipline === 'calisthenics') LS.setItem('equipCali', String(equipMode));
+    else if (discipline === 'breakdance') LS.setItem('equipBD', String(equipMode));
+    else if (discipline === 'pilates') LS.setItem('equipPil', String(equipMode));
+  }
+
+  function importBackupFromJson(data) {
+    if (!data || typeof data !== 'object') throw new Error('Invalid backup');
+    if (data.xp != null) {
+      state.xp = Math.max(0, parseInt(data.xp, 10) || 0);
+      LS.setItem('xp', String(state.xp));
+    }
+    if (data.doneDays && typeof data.doneDays === 'object') {
+      state.doneDays = data.doneDays;
+      LS.setItem('doneDays', JSON.stringify(state.doneDays));
+    }
+    if (data.discipline) LS.setItem('discipline', String(data.discipline));
+    applyEquipFromImport(String(data.discipline || ''), data.equipMode);
+
+    if (data.progression && typeof data.progression === 'object') {
+      LS.setItem('hashira_progression_v1', JSON.stringify(data.progression));
+    }
+    const up = window.HASHIRA_USER_PROFILE;
+    if (up && typeof up.save === 'function' && data.userProfile && typeof data.userProfile === 'object') {
+      const pr = data.userProfile;
+      if (pr.name && pr.goal && pr.discipline) {
+        up.save({
+          name: pr.name,
+          goal: pr.goal,
+          discipline: pr.discipline
+        });
+      }
+    }
+    var presetImportWarn = false;
+    if (data.presetsStore != null && window.HASHIRA_PRESETS && typeof window.HASHIRA_PRESETS.importStore === 'function') {
+      if (!window.HASHIRA_PRESETS.importStore(data.presetsStore)) presetImportWarn = true;
+    }
+    loadSettings();
+    showEquipUI();
+    calculateStreak();
+    updateStats();
+    renderCalendar();
+    renderPlanBuilder();
+    generateChecklist();
+    if (window.HASHIRA_PROGRESSION && typeof window.HASHIRA_PROGRESSION.refreshSnapshots === 'function') {
+      window.HASHIRA_PROGRESSION.refreshSnapshots();
+    }
+    if (window.HASHIRA_USER_PROFILE && typeof window.HASHIRA_USER_PROFILE.renderProfileSummary === 'function') {
+      window.HASHIRA_USER_PROFILE.renderProfileSummary();
+    }
+    const prRoot = document.getElementById('presets-root');
+    if (prRoot && window.HASHIRA_PRESETS && typeof window.HASHIRA_PRESETS.mountPresetsUI === 'function') {
+      window.HASHIRA_PRESETS.mountPresetsUI(prRoot);
+    }
+    return presetImportWarn;
+  }
+
+  function updateMissionSummary() {
+    const el = document.getElementById('mission-summary');
+    if (!el) return;
+    const d = document.getElementById('discipline-select');
+    const day = document.getElementById('day-type-select');
+    const dl = d?.options?.[d.selectedIndex]?.text || d?.value || '';
+    const dayl = day?.options?.[day.selectedIndex]?.text || day?.value || '';
+    el.textContent = `${dl} · ${dayl}`;
+  }
+
+  /** Avoid hijacking Space / N while typing or using native control behavior. */
+  function shouldBlockTrainShortcuts(el) {
+    if (!el || el.nodeType !== 1) return false;
+    let n = el;
+    while (n && n.nodeType === 1) {
+      if (n.isContentEditable) return true;
+      n = n.parentElement;
+    }
+    const t = el.tagName;
+    if (t === 'TEXTAREA' || t === 'SELECT' || t === 'BUTTON' || t === 'OPTION') return true;
+    if (t === 'SUMMARY') return true;
+    if (t === 'INPUT') return true;
+    if (t === 'A' && el.getAttribute('href')) return true;
+    return false;
+  }
+
+  function updateRunSheetPreview() {
+    const el = document.getElementById('run-sheet-preview');
+    if (!el) return;
+    const total = state.sessionSteps?.length || 0;
+    const box = document.getElementById('checklist-container');
+    let done = 0;
+    if (box) {
+      box.querySelectorAll('.checklist-check').forEach((c) => {
+        if (c.checked) done++;
+      });
+    }
+    if (!total) {
+      el.textContent = 'Run sheet fills in after your session is generated.';
+      return;
+    }
+    el.textContent = `${total} steps · ${done}/${total} checked — expand for the full list`;
+  }
+
+  function updateFormCuesPreview() {
+    const el = document.getElementById('form-cues-preview');
+    if (!el) return;
+    const title = document.getElementById('coach-title')?.textContent?.trim() || '—';
+    const firstCue = document.querySelector('#coach-cues li')?.textContent?.trim() || '';
+    el.textContent = firstCue ? `${title} · ${firstCue}` : `${title} — expand for diagrams and full cues`;
+  }
+
+  function updateTrainProgressChip() {
+    const chip = document.getElementById('train-progress-chip');
+    if (!chip) return;
+    let rank = RANKS[0].name;
+    for (const r of RANKS) if (state.xp >= r.min) rank = r.name;
+    chip.textContent = `${rank} · ${state.streak} streak · ${state.xp} XP`;
+  }
+
+  function openRunSheetFirstVisitIfNeeded() {
+    if (window.HASHIRA_USER_PROFILE && !window.HASHIRA_USER_PROFILE.isComplete()) return;
+    if (LS.getItem('hashira_run_sheet_intro_v1')) return;
+    const d = document.getElementById('details-run-sheet');
+    if (d) d.open = true;
+    LS.setItem('hashira_run_sheet_intro_v1', '1');
   }
 
   function calculateStreak() {
@@ -460,7 +740,9 @@
       }
     }
     state.streak = count;
-    document.getElementById('streak-val').innerText = count;
+    const streakEl = document.getElementById('streak-val');
+    if (streakEl) streakEl.innerText = count;
+    updateTrainProgressChip();
   }
 
   function updateQuests() {
@@ -470,6 +752,7 @@
       {name:'Conditioning Path', target:4200, note:'Work capacity + speed'}
     ];
     const container = document.getElementById('skill-quests-list');
+    if (!container) return;
     container.innerHTML = '';
     quests.forEach((q) => {
       const perc = Math.min(100, Math.floor((state.xp / q.target) * 100));
@@ -497,7 +780,7 @@
       tile.onclick = () => {
         if (state.doneDays[key]) delete state.doneDays[key];
         else state.doneDays[key] = true;
-        localStorage.setItem('doneDays', JSON.stringify(state.doneDays));
+        LS.setItem('doneDays', JSON.stringify(state.doneDays));
         renderCalendar();
         updateStats();
         calculateStreak();
@@ -511,6 +794,35 @@
   function renderCalendar() {
     renderCalendarInto('calendar-grid', 'week-label');
     renderCalendarInto('calendar-grid-plan', 'week-label-plan');
+  }
+
+  function renderChecklistUI(sessionSteps, persistKey) {
+    const discipline = document.getElementById('discipline-select').value;
+    const container = document.getElementById('checklist-container');
+    container.innerHTML = '<div style="font-size:0.9rem; font-weight:900; margin-bottom:10px">Workout Checklist</div>';
+
+    const saved = JSON.parse(LS.getItem(persistKey) || '{}');
+
+    sessionSteps.forEach((s, idx) => {
+      const div = document.createElement('div');
+      div.className = 'checklist-item';
+      const tagClass = s.tag === 'WORK' ? 'tag-work' : s.tag === 'SKILL' ? 'tag-skill' : s.tag === 'SHOULDER' ? 'tag-shoulder' : 'tag-rest';
+
+      const moveUrl = tutorialLink(s, discipline);
+      div.innerHTML = `<div style="display:flex; align-items:flex-start"><input type="checkbox" id="step-chk-${idx}" ${saved[idx] ? 'checked' : ''} style="transform: translateY(2px);" class="checklist-check"><div style="margin-left:10px"><div style="font-weight:900"><a href="${moveUrl}" target="_blank" rel="noopener noreferrer" class="move-link">${s.name}</a></div><div style="font-size:0.74rem; color:var(--text-dim)">${s.note}</div><div style="font-size:0.70rem; color:var(--text-dim); margin-top:3px">Category: <span style="color:#fff">${s.cat || CAT.SKILL}</span></div></div></div><span class="tag ${tagClass}">${s.tag}</span>`;
+
+      div.onclick = (e) => {
+        if (e.target.tagName === 'A') return;
+        if (e.target.tagName !== 'INPUT') {
+          const chk = div.querySelector('input');
+          chk.checked = !chk.checked;
+        }
+        saved[idx] = div.querySelector('input').checked;
+        LS.setItem(persistKey, JSON.stringify(saved));
+        updateRunSheetPreview();
+      };
+      container.appendChild(div);
+    });
   }
 
   function generateChecklist(forceNew = false) {
@@ -568,43 +880,32 @@
     sessionSteps.push(finisher);
     sessionSteps.push({ key:'rest', name:'Cooldown', note: discipline === 'pilates' ? 'Breathing + spinal decompression 60-90s' : 'Breathing 60-90s • loosen hips/shoulders', tag:'REST', cat:CAT.PREHAB, durationSec:75 });
 
-    const container = document.getElementById('checklist-container');
-    container.innerHTML = '<div style="font-size:0.9rem; font-weight:900; margin-bottom:10px">Workout Checklist</div>';
-
     const persistKey = `check_${ath}_${discipline}_${lvl}_${day}_${equipMode}_${getTodayKey()}`;
-    const saved = JSON.parse(localStorage.getItem(persistKey) || '{}');
-
-    sessionSteps.forEach((s, idx) => {
-      const div = document.createElement('div');
-      div.className = 'checklist-item';
-      const tagClass = s.tag === 'WORK' ? 'tag-work' : s.tag === 'SKILL' ? 'tag-skill' : s.tag === 'SHOULDER' ? 'tag-shoulder' : 'tag-rest';
-
-      const moveUrl = tutorialLink(s, discipline);
-      div.innerHTML = `<div style="display:flex; align-items:flex-start"><input type="checkbox" id="step-chk-${idx}" ${saved[idx] ? 'checked' : ''} style="transform: translateY(2px);" class="checklist-check"><div style="margin-left:10px"><div style="font-weight:900"><a href="${moveUrl}" target="_blank" rel="noopener noreferrer" class="move-link">${s.name}</a></div><div style="font-size:0.74rem; color:var(--text-dim)">${s.note}</div><div style="font-size:0.70rem; color:var(--text-dim); margin-top:3px">Category: <span style="color:#fff">${s.cat || CAT.SKILL}</span></div></div></div><span class="tag ${tagClass}">${s.tag}</span>`;
-
-      div.onclick = (e) => {
-        if (e.target.tagName === 'A') return;
-        if (e.target.tagName !== 'INPUT') {
-          const chk = div.querySelector('input');
-          chk.checked = !chk.checked;
-        }
-        saved[idx] = div.querySelector('input').checked;
-        localStorage.setItem(persistKey, JSON.stringify(saved));
-      };
-      container.appendChild(div);
-    });
+    activeChecklistPersistKey = persistKey;
+    renderChecklistUI(sessionSteps, persistKey);
 
     state.sessionSteps = sessionSteps;
     state.currentStep = 0;
     state.currentRound = 1;
     refreshStepUI();
+    updateMissionSummary();
+    updateRunSheetPreview();
     if (window.renderLibraryScreen) window.renderLibraryScreen();
   }
 
   function refreshStepUI() {
     const step = state.sessionSteps[state.currentStep];
-    if (!step) return;
+    const nextPreview = document.getElementById('next-exercise-preview');
+    if (!step) {
+      if (nextPreview) nextPreview.textContent = '';
+      return;
+    }
     const discipline = document.getElementById('discipline-select').value;
+
+    if (nextPreview) {
+      const nx = state.sessionSteps[state.currentStep + 1];
+      nextPreview.textContent = nx ? `Next: ${nx.name}` : '';
+    }
 
     document.getElementById('exercise-name').innerHTML = `<a href="${tutorialLink(step, discipline)}" target="_blank" rel="noopener noreferrer" class="move-link">${step.name}</a>`;
     document.getElementById('exercise-note').innerText = step.note;
@@ -628,10 +929,11 @@
     document.getElementById('session-progress').style.width = `${(state.currentStep / total) * 100}%`;
 
     renderCoach(step);
+    updateFormCuesPreview();
 
     if (!state.isRunning) {
       const btn = document.getElementById('btn-start');
-      if (state.currentStep === 0) btn.innerText = 'Start';
+      if (btn && state.currentStep === 0) btn.innerText = 'Start';
     }
   }
 
@@ -649,12 +951,13 @@
       const lvl = document.getElementById('level-select').value;
       const day = document.getElementById('day-type-select').value;
       const equipMode = currentEquipMode(discipline);
-      const persistKey = `check_${ath}_${discipline}_${lvl}_${day}_${equipMode}_${getTodayKey()}`;
-      const saved = JSON.parse(localStorage.getItem(persistKey) || '{}');
+      const persistKey = activeChecklistPersistKey || `check_${ath}_${discipline}_${lvl}_${day}_${equipMode}_${getTodayKey()}`;
+      const saved = JSON.parse(LS.getItem(persistKey) || '{}');
       saved[state.currentStep] = true;
-      localStorage.setItem(persistKey, JSON.stringify(saved));
+      LS.setItem(persistKey, JSON.stringify(saved));
       const chk = document.getElementById(`step-chk-${state.currentStep}`);
       if (chk) chk.checked = true;
+      updateRunSheetPreview();
     }
 
     let gain = 2;
@@ -662,7 +965,7 @@
     if (current.tag === 'SKILL') gain = 10;
     if (current.tag === 'SHOULDER') gain = 8;
     state.xp += gain;
-    localStorage.setItem('xp', state.xp);
+    LS.setItem('xp', state.xp);
     updateStats();
     updateQuests();
 
@@ -685,7 +988,18 @@
   function exportData() {
     const discipline = document.getElementById('discipline-select').value;
     const equipMode = currentEquipMode(discipline);
-    const data = { xp: state.xp, doneDays: state.doneDays, discipline, equipMode };
+    const progression = (window.HASHIRA_PROGRESSION && typeof window.HASHIRA_PROGRESSION.getExportPayload === 'function')
+      ? window.HASHIRA_PROGRESSION.getExportPayload()
+      : null;
+    const userProfile =
+      window.HASHIRA_USER_PROFILE && typeof window.HASHIRA_USER_PROFILE.load === 'function'
+        ? window.HASHIRA_USER_PROFILE.load()
+        : null;
+    const presetsStore =
+      window.HASHIRA_PRESETS && typeof window.HASHIRA_PRESETS.readStore === 'function'
+        ? window.HASHIRA_PRESETS.readStore()
+        : null;
+    const data = { xp: state.xp, doneDays: state.doneDays, discipline, equipMode, progression, userProfile, presetsStore };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -696,10 +1010,10 @@
 
   function markTodayDone() {
     state.doneDays[getTodayKey()] = true;
-    localStorage.setItem('doneDays', JSON.stringify(state.doneDays));
+    LS.setItem('doneDays', JSON.stringify(state.doneDays));
     renderCalendar();
-    updateStats();
     calculateStreak();
+    updateStats();
   }
 
   function resetToday() {
@@ -707,7 +1021,7 @@
 
     const today = getTodayKey();
     delete state.doneDays[today];
-    localStorage.setItem('doneDays', JSON.stringify(state.doneDays));
+    LS.setItem('doneDays', JSON.stringify(state.doneDays));
 
     const ath = document.getElementById('athlete-select').value;
     const discipline = document.getElementById('discipline-select').value;
@@ -715,7 +1029,10 @@
     const day = document.getElementById('day-type-select').value;
     const equipMode = currentEquipMode(discipline);
     const persistKey = `check_${ath}_${discipline}_${lvl}_${day}_${equipMode}_${today}`;
-    localStorage.removeItem(persistKey);
+    LS.removeItem(persistKey);
+    if (activeChecklistPersistKey && activeChecklistPersistKey !== persistKey) {
+      LS.removeItem(activeChecklistPersistKey);
+    }
 
     state.currentStep = 0;
     state.currentRound = 1;
@@ -724,12 +1041,14 @@
 
     generateChecklist();
     renderCalendar();
-    updateStats();
     calculateStreak();
+    updateStats();
 
     const btn = document.getElementById('btn-start');
-    btn.innerText = 'Start';
-    btn.style.background = 'var(--primary-blue)';
+    if (btn) {
+      btn.innerText = 'Start';
+      btn.style.background = 'var(--primary-blue)';
+    }
   }
 
   function generateNewSet() {
@@ -741,7 +1060,8 @@
   }
 
   function maybeShowVerseOnOpen() {
-    const enabled = localStorage.getItem('verseOnOpen');
+    if (window.HASHIRA_USER_PROFILE && !window.HASHIRA_USER_PROFILE.isComplete()) return;
+    const enabled = LS.getItem('verseOnOpen');
     const shouldShow = (enabled === null) ? true : (enabled === 'true');
     document.getElementById('toggle-verse-on-open').checked = shouldShow;
     if (shouldShow) setTimeout(() => showVerse(), 150);
@@ -757,7 +1077,7 @@
   function closeVerse() { document.getElementById('verse-modal').style.display = 'none'; }
 
   function turnVerseOff() {
-    localStorage.setItem('verseOnOpen', 'false');
+    LS.setItem('verseOnOpen', 'false');
     document.getElementById('toggle-verse-on-open').checked = false;
     closeVerse();
     alert('Bible verse on open: OFF');
@@ -789,7 +1109,8 @@
 
   function setupPWA() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      const swUrl = new URL('sw.js', window.location.href);
+      navigator.serviceWorker.register(swUrl.href, { scope: './' }).catch(() => {});
     }
 
     let deferredPrompt = null;
@@ -815,42 +1136,42 @@
   }
 
   function saveSettings() {
-    localStorage.setItem('athlete', document.getElementById('athlete-select').value);
-    localStorage.setItem('discipline', document.getElementById('discipline-select').value);
-    localStorage.setItem('level', document.getElementById('level-select').value);
-    localStorage.setItem('dayType', document.getElementById('day-type-select').value);
+    LS.setItem('athlete', document.getElementById('athlete-select').value);
+    LS.setItem('discipline', document.getElementById('discipline-select').value);
+    LS.setItem('level', document.getElementById('level-select').value);
+    LS.setItem('dayType', document.getElementById('day-type-select').value);
 
-    localStorage.setItem('equipGym', document.getElementById('equip-gym').value);
-    localStorage.setItem('equipCali', document.getElementById('equip-cali').value);
-    localStorage.setItem('equipBD', document.getElementById('equip-bd').value);
-    localStorage.setItem('equipPil', document.getElementById('equip-pil').value);
+    LS.setItem('equipGym', document.getElementById('equip-gym').value);
+    LS.setItem('equipCali', document.getElementById('equip-cali').value);
+    LS.setItem('equipBD', document.getElementById('equip-bd').value);
+    LS.setItem('equipPil', document.getElementById('equip-pil').value);
 
-    localStorage.setItem('joint', document.getElementById('joint-status').value);
-    localStorage.setItem('autoLoad', document.getElementById('auto-load').value);
-    localStorage.setItem('historyMode', document.getElementById('history-mode').value);
+    LS.setItem('joint', document.getElementById('joint-status').value);
+    LS.setItem('autoLoad', document.getElementById('auto-load').value);
+    LS.setItem('historyMode', document.getElementById('history-mode').value);
 
-    localStorage.setItem('rounds', document.getElementById('rounds-input').value);
-    localStorage.setItem('work', document.getElementById('work-input').value);
-    localStorage.setItem('rest', document.getElementById('rest-input').value);
-    localStorage.setItem('roundRest', document.getElementById('round-rest-input').value);
+    LS.setItem('rounds', document.getElementById('rounds-input').value);
+    LS.setItem('work', document.getElementById('work-input').value);
+    LS.setItem('rest', document.getElementById('rest-input').value);
+    LS.setItem('roundRest', document.getElementById('round-rest-input').value);
 
-    localStorage.setItem('smartMode', document.getElementById('smart-select').value);
+    LS.setItem('smartMode', document.getElementById('smart-select').value);
 
-    localStorage.setItem('sound', document.getElementById('toggle-sound').checked ? 'true' : 'false');
-    localStorage.setItem('autoNext', document.getElementById('toggle-auto-next').checked ? 'true' : 'false');
-    localStorage.setItem('autoCheck', document.getElementById('toggle-auto-check').checked ? 'true' : 'false');
-    localStorage.setItem('verseOnOpen', document.getElementById('toggle-verse-on-open').checked ? 'true' : 'false');
+    LS.setItem('sound', document.getElementById('toggle-sound').checked ? 'true' : 'false');
+    LS.setItem('autoNext', document.getElementById('toggle-auto-next').checked ? 'true' : 'false');
+    LS.setItem('autoCheck', document.getElementById('toggle-auto-check').checked ? 'true' : 'false');
+    LS.setItem('verseOnOpen', document.getElementById('toggle-verse-on-open').checked ? 'true' : 'false');
 
     const plan = [];
     for (let i = 0; i < 5; i++) {
       const el = document.getElementById(`plan-day-${i}`);
       if (el) plan.push(el.value);
     }
-    localStorage.setItem(planKey(), JSON.stringify(plan));
+    LS.setItem(planKey(), JSON.stringify(plan));
   }
 
   function loadSettings() {
-    const get = (k) => localStorage.getItem(k);
+    const get = (k) => LS.getItem(k);
 
     document.getElementById('athlete-select').value = get('athlete') || 'moise';
 
@@ -904,9 +1225,11 @@
     };
 
     loadSettings();
-
     const ath = document.getElementById('athlete-select').value;
     if (ath === 'her') document.body.classList.add('theme-her');
+    else document.body.classList.remove('theme-her');
+    applyHashiraColorTheme(getStoredColorTheme());
+    setupColorThemeToggle();
 
     ['rounds-input','work-input','rest-input','round-rest-input'].forEach((id) => {
       const el = document.getElementById(id);
@@ -915,15 +1238,24 @@
     });
 
     applySuggestedTimings(true);
-    updateStats();
     calculateStreak();
+    updateStats();
     renderCalendar();
     renderPlanBuilder();
     updateQuests();
     updateSleep();
     generateChecklist();
+    openRunSheetFirstVisitIfNeeded();
     setupPWA();
     maybeShowVerseOnOpen();
+
+    const checklistRoot = document.getElementById('checklist-container');
+    if (checklistRoot && !checklistRoot.dataset.runSheetDelegate) {
+      checklistRoot.dataset.runSheetDelegate = '1';
+      checklistRoot.addEventListener('change', (ev) => {
+        if (ev.target && ev.target.classList && ev.target.classList.contains('checklist-check')) updateRunSheetPreview();
+      });
+    }
 
     document.getElementById('athlete-select').addEventListener('change', () => {
       toggleAthleteTheme();
@@ -940,7 +1272,7 @@
     });
 
     document.getElementById('day-type-select').addEventListener('change', () => {
-      localStorage.setItem('dayType', document.getElementById('day-type-select').value);
+      LS.setItem('dayType', document.getElementById('day-type-select').value);
       applySuggestedTimings();
       generateChecklist();
       saveSettings();
@@ -967,7 +1299,7 @@
     });
 
     document.getElementById('auto-sync-day').addEventListener('change', (e) => {
-      localStorage.setItem('autoSync', e.target.checked ? 'true' : 'false');
+      LS.setItem('autoSync', e.target.checked ? 'true' : 'false');
       saveSettings();
       renderPlanBuilder();
       generateChecklist();
@@ -982,16 +1314,50 @@
     });
 
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') { e.preventDefault(); Timer.toggleTimer(); }
-      if (e.code === 'KeyN') nextStep();
+      if (shouldBlockTrainShortcuts(document.activeElement)) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        Timer.toggleTimer();
+      } else if (e.code === 'KeyN') {
+        e.preventDefault();
+        nextStep();
+      }
     });
+
+    const importInput = document.getElementById('import-backup-input');
+    if (importInput && !importInput.dataset.bound) {
+      importInput.dataset.bound = '1';
+      importInput.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(String(reader.result || '{}'));
+            if (!confirm('Restore from this backup? Local XP, calendar, equipment, progression, profile, and saved presets may be overwritten.')) return;
+            var presetWarn = importBackupFromJson(data);
+            alert(presetWarn ? 'Backup restored. Preset data in the file was skipped (invalid or over limit).' : 'Backup restored.');
+          } catch (err) {
+            alert('Could not read backup file.');
+          }
+        };
+        reader.readAsText(f);
+        e.target.value = '';
+      });
+    }
 
     window.addEventListener('hashchange', window.HASHIRA_ROUTER.handleRoute);
     window.HASHIRA_ROUTER.handleRoute();
+    if (window.HASHIRA_USER_PROFILE && typeof window.HASHIRA_USER_PROFILE.renderProfileSummary === 'function') {
+      window.HASHIRA_USER_PROFILE.renderProfileSummary();
+    }
   }
 
   window.nextStep = nextStep;
   window.exportData = exportData;
+  window.refreshHomePresetHint = refreshHomePresetHint;
+  window.updateStats = updateStats;
+  window.updateQuests = updateQuests;
   window.markTodayDone = markTodayDone;
   window.resetToday = resetToday;
   window.showVerse = showVerse;
@@ -1003,5 +1369,70 @@
   window.resetPlan = resetPlan;
   window.generateNewSet = generateNewSet;
 
+  function loadHashiraPresetById(presetId) {
+    const P = window.HASHIRA_PRESETS;
+    if (!P) {
+      alert('Presets module not loaded.');
+      return;
+    }
+    const all = P.listUserPresets().concat(P.defaultPresets());
+    const preset = all.find((p) => p.id === presetId);
+    if (!preset) {
+      alert('Preset not found.');
+      return;
+    }
+    const steps = P.presetToSessionSteps(preset, {
+      CAT,
+      workCap: parseInt(document.getElementById('work-input').value, 10)
+    });
+    const persistKey = `check_preset_${presetId}_${getTodayKey()}`;
+    activeChecklistPersistKey = persistKey;
+    Timer.pauseTimer();
+    state.isRunning = false;
+    state.currentStep = 0;
+    state.currentRound = 1;
+    renderChecklistUI(steps, persistKey);
+    state.sessionSteps = steps;
+    refreshStepUI();
+    updateMissionSummary();
+    updateRunSheetPreview();
+    if (window.renderLibraryScreen) window.renderLibraryScreen();
+    const btn = document.getElementById('btn-start');
+    if (btn) {
+      btn.innerText = 'Start';
+      btn.style.background = 'var(--primary-blue)';
+    }
+  }
+
+  window.loadHashiraPresetById = loadHashiraPresetById;
+
   init();
+})();
+
+// Compact command-home bindings (presentation only; existing state remains source of truth).
+(function hashiraCommandHomeBindings(){
+  function readProfile(){
+    try { return JSON.parse((window.HASHIRA_LS || localStorage).getItem('hashira_user_profile_v1') || 'null'); } catch (_) { return null; }
+  }
+  function sync(){
+    var p=readProfile();
+    var name=(p && p.name ? p.name : 'Athlete').trim();
+    var nameEl=document.getElementById('home-athlete-name');
+    var initEl=document.getElementById('home-avatar-initial');
+    if(nameEl) nameEl.textContent=name.toUpperCase();
+    if(initEl) initEl.textContent=(name.charAt(0)||'H').toUpperCase();
+    var xp=parseInt(document.getElementById('xp-val')?.textContent||'0',10)||0;
+    var today=xp%250;
+    var todayEl=document.getElementById('home-today-xp');
+    var fill=document.getElementById('home-xp-fill');
+    if(todayEl) todayEl.textContent=String(today);
+    if(fill) fill.style.width=Math.min(100,(today/250)*100)+'%';
+    var time=document.getElementById('home-training-time');
+    if(time) time.textContent=Math.max(0,Math.floor(xp/45))+'h';
+    var level=document.getElementById('home-next-level');
+    if(level) level.textContent=(250-today)+' XP to next level';
+  }
+  document.addEventListener('DOMContentLoaded',function(){ sync(); setTimeout(sync,400); });
+  window.addEventListener('hashchange',sync);
+  setInterval(sync,2500);
 })();

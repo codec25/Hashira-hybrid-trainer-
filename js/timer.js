@@ -30,12 +30,29 @@
     circle.style.strokeDashoffset = `${C * clamped}`;
   }
 
+  function updateTimerUrgencyVisuals() {
+    const shell = document.getElementById('timer-shell-main') || document.querySelector('.timer-shell');
+    if (!shell || !window.HASHIRA_STATE) return;
+    const { state } = window.HASHIRA_STATE;
+    const total = Math.max(1, state.stepTotal || 1);
+    const left = Math.max(0, state.timeLeft);
+    shell.classList.remove('timer-shell--warn', 'timer-shell--crit', 'timer-shell--pulse');
+    if (left <= 0) return;
+    const ratio = left / total;
+    if (ratio <= 0.08) {
+      shell.classList.add('timer-shell--crit', 'timer-shell--pulse');
+    } else if (ratio <= 0.2) {
+      shell.classList.add('timer-shell--warn');
+    }
+  }
+
   function updateTimerDisplay() {
     const { state } = window.HASHIRA_STATE;
     const m = Math.floor(state.timeLeft / 60);
     const s = state.timeLeft % 60;
     const timerText = document.getElementById('timer-text');
     if (timerText) timerText.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    updateTimerUrgencyVisuals();
   }
 
   function beep() {
@@ -95,6 +112,7 @@
     setRingVisible,
     updateRingProgress,
     updateTimerDisplay,
+    updateTimerUrgencyVisuals,
     beep,
     startTimer,
     pauseTimer,

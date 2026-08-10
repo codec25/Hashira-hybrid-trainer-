@@ -3,83 +3,452 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0284c7">
+  <script src="../js/jg-theme-early.js"></script>
+  <meta name="theme-color" content="#f3efe6" id="meta-theme-color">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.svg">
-  <title>HASHIRA HYBRID PRO // Duo Trainer</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>HASHIRA HYBRID PRO</title>
+  <link rel="stylesheet" href="styles.css?v=20260725-1">
+  <link rel="stylesheet" href="../css/jg-themes-future.css">
+  <link rel="stylesheet" href="../css/jg-ambient.css">
 </head>
-<body>
-  <header>
-    <div class="stats-bar">
-      <div class="stat-item"><span class="text-dim">XP</span><span class="stat-val" id="xp-val">0</span></div>
-      <div class="stat-item"><span class="text-dim">Rank</span><span class="stat-val" id="rank-val">Initiate</span></div>
-      <div class="stat-item"><span class="text-dim">Streak</span><span class="stat-val" id="streak-val">0</span></div>
-      <div class="stat-item"><span class="text-dim">Today</span><span class="stat-val" id="today-status">No</span></div>
+<body class="jg-ambient-page">
+  <script>
+    try {
+      if (localStorage.getItem("athlete") === "her") document.body.classList.add("theme-her");
+    } catch (e) {}
+  </script>
+  <div class="jg-ambient jg-ambient--marketing" aria-hidden="true"></div>
+  <header class="app-header">
+    <div class="app-header-brand">
+      <span class="app-title">HASHIRA</span>
+      <span class="app-subtitle">Your movement adventure</span>
+      <p class="app-identity-line" aria-hidden="true">Train free. Lead well. Keep moving.</p>
     </div>
-    <div class="stats-bar">
-      <button class="btn-header" id="pwa-install" style="display:none">Install App</button>
-      <button class="btn-header" onclick="exportData()">Export</button>
-      <button class="btn-header danger" onclick="resetToday()">Reset Today</button>
+    <div class="app-header-actions">
+      <div class="jg-theme-switch" id="hashira-theme-switch" role="group" aria-label="Color theme">
+        <button type="button" class="jg-theme-switch__btn" data-color-theme="dark" id="theme-btn-dark" aria-pressed="false">Dark</button>
+        <button type="button" class="jg-theme-switch__btn" data-color-theme="sunlit" id="theme-btn-sunlit" aria-pressed="true">Sunlit</button>
+      </div>
+      <button class="btn-header" id="pwa-install" type="button" style="display:none">Install</button>
     </div>
   </header>
 
-  <nav class="top-nav">
-    <a href="#dashboard" data-route="dashboard">Dashboard</a>
-    <a href="#session" data-route="session">Session Player</a>
-    <a href="#checklist" data-route="checklist">Checklist</a>
-    <a href="#plan" data-route="plan">Weekly Plan</a>
+  <nav class="top-nav app-tab-bar" aria-label="Main">
+    <a href="#home" data-route="home">Today</a>
+    <a href="#train" data-route="train">Move</a>
+    <a href="#circles" data-route="circles">Circles</a>
+    <a href="#chat" data-route="chat">Chat</a>
+    <a href="#plan" data-route="plan">Plan</a>
+    <a href="#presets" data-route="presets">Presets</a>
     <a href="#library" data-route="library">Library</a>
-    <a href="#tools" data-route="tools">Tools</a>
-    <a href="#about" data-route="about">About</a>
+    <a href="#profile" data-route="profile">Me</a>
   </nav>
 
   <main id="app-main">
-    <section class="screen" data-screen="dashboard">
-      <section class="card">
-        <div class="card-title">Dashboard <span class="small-text">default landing</span></div>
-        <div class="grid-2">
-          <div class="dash-box">
-            <div class="dash-title">Today Status</div>
-            <div class="dash-value" id="today-dashboard-status">Not Done</div>
-            <div class="hint">Use this to quickly jump into your session.</div>
-          </div>
-          <div class="dash-box">
-            <div class="dash-title">Quick Start</div>
-            <button class="btn-main btn-start" onclick="location.hash='#session'">Open Session Player</button>
-            <button class="btn-main btn-next" onclick="markTodayDone()" style="margin-top:8px">Mark Today Done</button>
+    <section class="screen hashira-onboarding-screen" data-screen="onboarding">
+      <section class="hashira-onboarding-shell">
+        <div class="hashira-onboarding-intro">
+          <span class="hashira-onboarding-mark">羽</span>
+          <p class="hashira-onboarding-kicker">YOUR MOVEMENT ADVENTURE</p>
+          <h1>Build your character.<br>Move with purpose.</h1>
+          <p>Set your identity once, then enter a focused training home built around your missions, progress, and circle.</p>
+          <div class="hashira-onboarding-signals" aria-hidden="true">
+            <span><b>⚔</b> Train</span><span><b>🔥</b> Progress</span><span><b>◉</b> Connect</span>
           </div>
         </div>
-      </section>
 
-      <section class="card" id="calendar-card">
-        <div class="card-title" id="week-label">Weekly Calendar</div>
-        <div class="calendar-row" id="calendar-grid"></div>
-      </section>
-
-      <section class="card">
-        <div class="card-title">Skill Quests <span class="small-text">progress = XP</span></div>
-        <div id="skill-quests-list"></div>
+        <div class="hashira-onboarding-card">
+          <div class="hashira-onboarding-card-head">
+            <span>CREATE YOUR HASHIRA</span>
+            <h2>Start your journey</h2>
+            <p>This profile stays available for solo training on this device.</p>
+          </div>
+          <div class="hashira-onboarding-fields">
+            <label for="onboard-name"><span>Name</span><input type="text" id="onboard-name" autocomplete="name" maxlength="80" placeholder="What should Hashira call you?"></label>
+            <label for="onboard-goal"><span>Main goal</span><textarea id="onboard-goal" rows="3" maxlength="240" placeholder="What are you building through training?"></textarea></label>
+            <label for="onboard-discipline"><span>Primary discipline</span><select id="onboard-discipline"></select></label>
+          </div>
+          <p class="hashira-onboarding-error hidden" id="onboard-error" role="alert"></p>
+          <button type="button" class="hashira-onboarding-start" id="onboard-start-btn"><span>⚔</span> ENTER HASHIRA</button>
+          <p class="hashira-onboarding-note">You can change these details later from <strong>Me</strong>.</p>
+        </div>
       </section>
     </section>
 
-    <section class="screen" data-screen="session">
-      <div class="screen-top">
-        <button class="btn-header" onclick="location.hash='#dashboard'">Return to Dashboard</button>
+    <section class="screen hashira-command-home" data-screen="home">
+      <section class="hashira-profile-hero">
+        <div class="hashira-hero-shade"></div>
+        <div class="hashira-profile-top">
+          <div class="hashira-avatar-orbit" aria-hidden="true"><span id="home-avatar-initial">H</span><b>18</b></div>
+          <div class="hashira-identity">
+            <span class="hashira-eyebrow">HASHIRA OF FREEDOM</span>
+            <h1 id="home-athlete-name">ATHLETE</h1>
+            <div class="hashira-level-line">
+              <div class="xp-rank-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="xp-rank-track" aria-label="Progress to next rank"><div class="xp-rank-track-fill" id="xp-rank-bar-fill"></div></div>
+              <strong id="rank-hero-name">Initiate</strong>
+            </div>
+            <span class="sr-only" id="rank-hero-next">Next rank at 350 XP</span>
+            <span class="sr-only" id="xp-rank-bar-meta">0 / 350 XP</span>
+          </div>
+        </div>
+        <div class="hashira-signal-row">
+          <div><strong><span aria-hidden="true">🔥</span> <span id="streak-val">0</span></strong><small>Day streak</small></div>
+          <div><strong><span aria-hidden="true">💪</span> <span id="xp-val">0</span></strong><small>Total XP</small></div>
+          <div><strong><span aria-hidden="true">◷</span> <span id="home-training-time">0h</span></strong><small>Training time</small></div>
+          <span class="sr-only" id="rank-val">Initiate</span><span class="sr-only" id="today-status">No</span><span class="sr-only" id="today-dashboard-status">Not Done</span>
+        </div>
+      </section>
+
+      <section class="hashira-now-card">
+        <div class="hashira-now-icon">⚡</div>
+        <div class="hashira-now-copy">
+          <span>NOW</span>
+          <h2 id="home-now-title">Your next training session</h2>
+          <p id="mission-summary">Build today’s movement session</p>
+          <div class="hashira-mini-progress"><i></i></div>
+        </div>
+        <button type="button" onclick="location.hash='#train'">Continue <b>→</b></button>
+      </section>
+
+      <section class="hashira-quest-card">
+        <div class="hashira-section-head"><div><span>TODAY’S QUEST</span><small>Small actions. Real momentum.</small></div><button type="button" onclick="location.hash='#plan'">Edit</button></div>
+        <div class="hashira-quest-list" id="hashira-home-quests">
+          <button type="button" onclick="location.hash='#train'"><i>🤸</i><span><strong>Movement practice</strong><small>20 min</small></span><em>+40 XP</em><b>✓</b></button>
+          <button type="button" onclick="location.hash='#train'"><i>💪</i><span><strong>Strength session</strong><small>45 min</small></span><em>+80 XP</em><b></b></button>
+          <button type="button" onclick="location.hash='#plan'"><i>🥁</i><span><strong>Skill practice</strong><small>30 min</small></span><em>+60 XP</em><b></b></button>
+          <button type="button" onclick="location.hash='#library'"><i>🧘</i><span><strong>Stretch & mobility</strong><small>15 min</small></span><em>+20 XP</em><b></b></button>
+        </div>
+        <div class="hashira-today-xp"><div><span>TODAY’S XP</span><strong><b id="home-today-xp">0</b> / 250 XP</strong></div><small id="home-next-level">Keep moving</small></div>
+        <div class="hashira-xp-track"><i id="home-xp-fill"></i></div>
+      </section>
+
+      <section class="hashira-social-strip">
+        <div class="hashira-section-head"><div><span>TRAINING TOGETHER</span><small>Your circle is moving</small></div><button type="button" onclick="location.hash='#circles'">View all</button></div>
+        <div class="hashira-friends-row">
+          <button type="button" onclick="location.hash='#circles'"><i>S</i><span>Samuel</span></button>
+          <button type="button" onclick="location.hash='#circles'"><i>J</i><span>Jacob</span></button>
+          <button type="button" onclick="location.hash='#circles'"><i>E</i><span>Ethan</span></button>
+          <button type="button" onclick="location.hash='#circles'"><i>D</i><span>Daniel</span></button>
+          <button type="button" onclick="location.hash='#circles'"><i>+8</i><span>More</span></button>
+        </div>
+      </section>
+
+      <button class="hashira-start-training" type="button" onclick="location.hash='#train'"><span>⚔</span> START TRAINING</button>
+
+      <details class="hashira-more-panel">
+        <summary>More dashboard tools <span>⌄</span></summary>
+        <div class="hashira-more-grid">
+          <button type="button" onclick="location.hash='#adventure'">Adventure</button>
+          <button type="button" onclick="location.hash='#presets'">Saved workouts</button>
+          <button type="button" onclick="location.hash='#library'">Move library</button>
+          <button type="button" onclick="location.hash='#plan'">Weekly plan</button>
+        </div>
+        <div class="hidden" aria-hidden="true"><div id="home-preset-body"></div><div id="progress-home-body"></div><div id="calendar-grid"></div><div id="checklist-container"></div><div id="skill-quests-list"></div><span id="week-label"></span><span id="run-sheet-preview"></span><details id="details-run-sheet"></details></div>
+      </details>
+    </section>
+
+    <section class="screen" data-screen="circles">
+      <div class="community-navline">
+        <button class="community-back" type="button" onclick="location.hash='#home'" aria-label="Back to Today">‹</button>
+        <span>Community</span>
+        <button class="community-avatar-btn" id="community-avatar-btn" type="button" onclick="location.hash='#profile'" aria-label="Open my profile">M</button>
       </div>
 
-      <section class="card">
-        <div class="card-title">
-          Session Player
-          <span class="small-text">Space: Start/Pause • N: Next</span>
+      <section class="circles-hero">
+        <div>
+          <span class="community-kicker">MOVE WITH PEOPLE</span>
+          <h1>Your people make consistency feel lighter.</h1>
+          <p>Join a local circle, follow a coach, and turn “we should train” into an actual session.</p>
+        </div>
+        <button class="circles-create-orb" type="button" id="open-create-circle"><span>＋</span>Create a circle</button>
+      </section>
+
+      <div class="community-segments" role="tablist" aria-label="Circle views">
+        <button type="button" class="active" data-community-tab="mine">My circles</button>
+        <button type="button" data-community-tab="discover">Discover</button>
+        <button type="button" data-community-tab="coaches">Coaches</button>
+      </div>
+
+      <section id="community-circles-view" class="community-view" aria-live="polite"></section>
+      <section id="community-coaches-view" class="community-view hidden" aria-live="polite"></section>
+
+      <details class="community-fold" id="create-circle-fold">
+        <summary>
+          <span><b>Start something nearby</b><small>Create a private or discoverable training circle.</small></span>
+          <i>＋</i>
+        </summary>
+        <form id="create-circle-form" class="community-fold-body">
+          <div class="field-grid">
+            <div class="field-span-2">
+              <label class="field-label" for="circle-name">Circle name</label>
+              <input id="circle-name" name="name" maxlength="60" required placeholder="Saturday Freedom Squad">
+            </div>
+            <div>
+              <label class="field-label" for="circle-focus">Focus</label>
+              <select id="circle-focus" name="focus">
+                <option>Calisthenics foundations</option>
+                <option>Hybrid movement</option>
+                <option>Outdoor conditioning</option>
+                <option>Dance fitness</option>
+                <option>Mobility and recovery</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="circle-area">General area</label>
+              <input id="circle-area" name="area" maxlength="50" placeholder="Aylmer">
+            </div>
+            <div>
+              <label class="field-label" for="circle-privacy">Visibility</label>
+              <select id="circle-privacy" name="privacy">
+                <option value="private">Private — invitation only</option>
+                <option value="discoverable">Discoverable — request to join</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="circle-day">Usual rhythm</label>
+              <input id="circle-day" name="rhythm" maxlength="50" placeholder="Saturdays · 10:00 AM">
+            </div>
+          </div>
+          <button class="btn-cta btn-cta-primary" type="submit">Create circle</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="screen" data-screen="chat">
+      <div class="community-navline">
+        <button class="community-back" type="button" onclick="location.hash='#circles'" aria-label="Back to Circles">‹</button>
+        <span>Messages</span>
+        <button class="community-icon-btn" type="button" onclick="location.hash='#circles'" aria-label="Find a circle">＋</button>
+      </div>
+
+      <section class="chat-shell">
+        <aside class="chat-sidebar">
+          <div class="chat-sidebar-head">
+            <div><span class="community-kicker">CONVERSATIONS</span><h2>Keep the plan moving.</h2></div>
+          </div>
+          <div id="chat-thread-list" class="chat-thread-list"></div>
+        </aside>
+        <section class="chat-stage" id="chat-stage">
+          <header class="chat-stage-head" id="chat-stage-head"></header>
+          <div class="chat-safety-note"><span>⌁</span> Exact meeting locations stay inside accepted circles.</div>
+          <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+          <form class="chat-composer" id="chat-composer">
+            <button type="button" id="chat-mission-button" aria-label="Share a mission">✦</button>
+            <textarea id="chat-message-input" rows="1" maxlength="1000" placeholder="Message your circle…"></textarea>
+            <button type="submit" aria-label="Send message">↑</button>
+          </form>
+        </section>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="adventure">
+      <div class="screen-top screen-top--split">
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
+        <span class="mode-chip">Mission generator</span>
+      </div>
+
+      <section class="adventure-hero">
+        <div>
+          <span class="eyebrow">THE WORLD IS YOUR DOJO</span>
+          <h1>Training should feel like a story.</h1>
+          <p>Generate an expedition for the beach, park, stairs, a small room, or wherever you happen to be.</p>
+        </div>
+        <div class="adventure-orb" aria-hidden="true"><span>旅</span></div>
+      </section>
+
+      <section class="card mission-builder-card">
+        <div class="card-title card-title--soft">Build an expedition</div>
+        <div class="mission-builder-grid">
+          <div>
+            <label class="field-label" for="adventure-world">World</label>
+            <select id="adventure-world">
+              <option value="surprise">Surprise me</option>
+              <option value="beach">Beach</option>
+              <option value="park">Park / playground</option>
+              <option value="stairs">Stairs / hill</option>
+              <option value="home">Small room</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="adventure-time">Time</label>
+            <select id="adventure-time">
+              <option value="12">12 min — quick quest</option>
+              <option value="20" selected>20 min — expedition</option>
+              <option value="30">30 min — full chapter</option>
+              <option value="45">45 min — saga</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="adventure-energy">Energy</label>
+            <select id="adventure-energy">
+              <option value="restore">Restore</option>
+              <option value="steady" selected>Steady</option>
+              <option value="fire">Fire</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="adventure-party">Party</label>
+            <select id="adventure-party">
+              <option value="solo">Solo</option>
+              <option value="duo">Two warriors</option>
+              <option value="squad">Small squad</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-cta btn-cta-primary adventure-generate-btn" type="button" id="adventure-generate">Reveal my mission</button>
+      </section>
+
+      <section id="adventure-result" class="adventure-result" aria-live="polite"></section>
+
+      <section class="card game-vault-card">
+        <div class="card-title card-title--soft">Training game vault</div>
+        <p class="section-lede">Use these when ordinary sets feel dead—or when a group needs energy.</p>
+        <div id="game-vault" class="game-vault-grid"></div>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="coach">
+      <div class="screen-top screen-top--split">
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
+        <span class="mode-chip mode-chip--coach">Sensei mode</span>
+      </div>
+
+      <section class="coach-hero">
+        <div>
+          <span class="eyebrow">DON’T JUST COUNT REPS</span>
+          <h1>Teach movement people can own.</h1>
+          <p>Prepare the session, coach one correction at a time, and leave your student stronger—not confused.</p>
+        </div>
+        <div class="coach-method">
+          <span>1 Explain</span><span>2 Demonstrate</span><span>3 Observe</span><span>4 Adjust</span>
+        </div>
+      </section>
+
+      <div class="coach-workspace">
+        <section class="card coach-builder-card">
+          <div class="card-title card-title--soft">Session briefing</div>
+          <div class="field-grid">
+            <div class="field-span-2">
+              <label class="field-label" for="coach-student">Student or group</label>
+              <input id="coach-student" type="text" maxlength="80" placeholder="Name or group name">
+            </div>
+            <div>
+              <label class="field-label" for="coach-focus">Mission focus</label>
+              <select id="coach-focus">
+                <option value="foundations">Calisthenics foundations</option>
+                <option value="upper">Upper-body strength</option>
+                <option value="lower">Leg power &amp; landing</option>
+                <option value="core">Core control</option>
+                <option value="conditioning">Conditioning game</option>
+                <option value="mobility">Mobility &amp; recovery</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="coach-level">Level</label>
+              <select id="coach-level">
+                <option value="beginner">New / beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="mixed">Mixed group</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="coach-duration">Duration</label>
+              <select id="coach-duration">
+                <option value="20">20 minutes</option>
+                <option value="30" selected>30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="coach-space">Space</label>
+              <select id="coach-space">
+                <option value="home">No equipment</option>
+                <option value="park">Park / bar</option>
+                <option value="beach">Beach</option>
+              </select>
+            </div>
+          </div>
+          <div class="readiness-check">
+            <span>Readiness</span>
+            <label><input type="radio" name="coach-readiness" value="green" checked> Green</label>
+            <label><input type="radio" name="coach-readiness" value="amber"> Amber</label>
+            <label><input type="radio" name="coach-readiness" value="red"> Red</label>
+          </div>
+          <button class="btn-cta btn-cta-primary" type="button" id="coach-build">Build coaching session</button>
+        </section>
+
+        <section class="card camera-card">
+          <div class="camera-head">
+            <div>
+              <div class="card-title card-title--soft">Movement mirror</div>
+              <p class="hint">Use your camera to demonstrate or let the student check their form.</p>
+            </div>
+            <span class="camera-live-dot" id="camera-status">Camera off</span>
+          </div>
+          <div class="camera-stage">
+            <video id="coach-camera" muted playsinline></video>
+            <div id="camera-placeholder"><span>鏡</span><small>Your movement mirror</small></div>
+          </div>
+          <div class="camera-actions">
+            <button class="btn-header" type="button" id="camera-toggle">Start camera</button>
+            <button class="btn-header btn-ghost" type="button" id="camera-flip">Mirror: on</button>
+          </div>
+          <div class="remote-companion">
+            <label class="field-label" for="video-room-link">Training together online</label>
+            <div class="video-link-row">
+              <input id="video-room-link" type="url" placeholder="Paste a Meet, Zoom, or video-room link">
+              <button class="btn-header" type="button" id="open-video-room">Open beside Hashira</button>
+            </div>
+            <p class="hint">Hashira stays your timer and coaching board while your call opens in another window.</p>
+          </div>
+        </section>
+      </div>
+
+      <section id="coach-result" class="coach-result" aria-live="polite"></section>
+
+      <section class="card teaching-deck-card">
+        <div class="card-title card-title--soft">Sensei pocket cards</div>
+        <div class="teaching-deck">
+          <article><span class="teaching-card-num">01</span><h3>One cue only</h3><p>Fix the biggest thing first. Let them move again before adding another instruction.</p></article>
+          <article><span class="teaching-card-num">02</span><h3>Earn the progression</h3><p>Choose the version they can control today—not the impressive version they cannot own yet.</p></article>
+          <article><span class="teaching-card-num">03</span><h3>Praise evidence</h3><p>Say what improved: “Your ribs stayed down,” not only “good job.”</p></article>
+          <article><span class="teaching-card-num">04</span><h3>Finish with a win</h3><p>End on a clean rep, a fun challenge, or a measurable victory they can remember.</p></article>
+        </div>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="train">
+      <div class="screen-top screen-top--split">
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
+        <div class="train-progress-chip" id="train-progress-chip" aria-live="polite"></div>
+      </div>
+
+      <section class="card train-focus-card train-layout-card card--train-session">
+        <div class="train-top-stats">
+          <div class="train-rank-strip">
+            <span class="train-rank-label">Rank</span>
+            <span class="train-rank-name" id="train-rank-pill">Initiate</span>
+          </div>
+          <div class="train-xp-strip">
+            <div class="train-xp-strip-head"><span class="text-dim">To next rank</span><span id="train-xp-strip-meta">0 / 350</span></div>
+            <div class="train-xp-track" id="train-xp-track" role="presentation">
+              <div class="train-xp-track-fill" id="train-xp-bar-fill"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="card" style="background:var(--bg-input); padding:18px; margin-top:12px">
-          <div id="exercise-name" style="font-weight:900; text-align:center">Warmup</div>
-          <div id="exercise-note" style="font-size:0.78rem; color:var(--text-dim); text-align:center">—</div>
+        <div class="train-center-stack">
+          <div class="train-exercise-block">
+            <div class="train-label">Current exercise</div>
+            <div id="exercise-name" class="train-exercise-name">Warmup</div>
+            <div id="exercise-note" class="train-exercise-note">—</div>
+            <div id="next-exercise-preview" class="train-next-preview" aria-live="polite"></div>
+          </div>
 
-          <div class="timer-shell">
+          <div class="timer-shell timer-shell--main" id="timer-shell-main">
             <div class="ring" id="rest-ring">
               <svg viewBox="0 0 120 120" aria-hidden="true">
                 <circle class="track" cx="60" cy="60" r="48"></circle>
@@ -90,133 +459,137 @@
             <div class="ring-label" id="rest-ring-label">REST</div>
           </div>
 
-          <div class="progress-container"><div class="progress-bar" id="session-progress"></div></div>
-          <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-dim); margin-bottom:12px">
+          <div class="progress-container train-session-track"><div class="progress-bar" id="session-progress"></div></div>
+        </div>
+
+        <div class="train-bottom-deck">
+          <div class="train-meta-row">
             <span id="step-count">Step 1/1</span>
             <span id="round-count">Round 1/1</span>
           </div>
-          <div class="btn-group">
-            <button class="btn-main btn-start" id="btn-start" onclick="toggleTimer()">Start</button>
-            <button class="btn-main btn-next" onclick="pauseTimer()">Pause</button>
-            <button class="btn-main btn-next" onclick="nextStep()">Next</button>
+          <div class="train-controls">
+            <button class="btn-cta btn-cta-primary" id="btn-start" type="button" onclick="toggleTimer()">Start</button>
+            <button class="btn-cta btn-cta-secondary" type="button" onclick="pauseTimer()">Pause</button>
+            <button class="btn-cta btn-cta-secondary" type="button" onclick="nextStep()">Next</button>
           </div>
-          <button class="btn-done" onclick="markTodayDone()">Mark Today Done</button>
+          <button class="btn-cta btn-cta-accent" type="button" onclick="markTodayDone()">Mark Today Done</button>
+          <p class="hint train-keys-hint">Keys (when focus is not in a field or button): Space start/pause · N next</p>
         </div>
       </section>
 
-      <section class="card">
-        <div class="diagram-box" id="diagram-container"></div>
-        <div class="card-title">Form Cues</div>
-        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:14px; padding:12px">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px">
-            <div style="font-weight:900; font-size:0.95rem" id="coach-title">—</div>
-            <div style="font-size:0.72rem; color:var(--text-dim)" id="coach-tag">—</div>
+      <div class="train-secondary-panel">
+      <section class="card session-result-card card--log">
+        <div class="card-title card-title--soft">After session — log</div>
+        <p class="hint">One entry per day. Re-saving reconciles XP — no double stacking.</p>
+        <div class="field-grid">
+          <div>
+            <label class="field-label" for="prog-completed">Completed</label>
+            <select id="prog-completed">
+              <option value="1" selected>Yes — finished</option>
+              <option value="0">Partial / stopped</option>
+            </select>
           </div>
-          <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px">
-            <div style="font-size:0.82rem"><span class="text-dim">Category:</span> <span id="coach-cat">—</span></div>
-            <div style="font-size:0.82rem"><span class="text-dim">Breath:</span> <span id="coach-breath">—</span></div>
-            <div style="font-size:0.82rem"><span class="text-dim">Tempo:</span> <span id="coach-tempo">—</span></div>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:10px">
-            <div>
-              <div style="font-size:0.78rem; font-weight:900; margin-bottom:6px">Do this</div>
-              <ul id="coach-cues" style="margin:0; padding-left:18px; color:var(--text-main); font-size:0.86rem; line-height:1.35"></ul>
-            </div>
-            <div>
-              <div style="font-size:0.78rem; font-weight:900; margin-bottom:6px">Avoid</div>
-              <ul id="coach-mistakes" style="margin:0; padding-left:18px; color:var(--text-dim); font-size:0.82rem; line-height:1.35"></ul>
-            </div>
+          <div>
+            <label class="field-label" for="prog-effort">Effort (1–5)</label>
+            <select id="prog-effort">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
           </div>
         </div>
+        <label class="field-label">Quality</label>
+        <div class="progress-quality-row" role="group" aria-label="Session quality">
+          <label class="progress-chip"><input type="radio" name="prog-quality" value="rough"> Rough</label>
+          <label class="progress-chip"><input type="radio" name="prog-quality" value="solid" checked> Solid</label>
+          <label class="progress-chip"><input type="radio" name="prog-quality" value="sharp"> Sharp</label>
+        </div>
+        <div class="field-grid" style="margin-top:10px">
+          <div>
+            <label class="field-label" for="prog-reps">Total reps</label>
+            <input type="number" id="prog-reps" value="0" min="0" step="1">
+          </div>
+          <div>
+            <label class="field-label" for="prog-hold">Hold (sec)</label>
+            <input type="number" id="prog-hold" value="0" min="0" step="1">
+          </div>
+          <div>
+            <label class="field-label" for="prog-rounds-done">Rounds completed</label>
+            <input type="number" id="prog-rounds-done" value="" min="0" max="24" step="1" placeholder="Auto from timer when empty">
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label class="field-label" for="prog-notes">Notes (optional)</label>
+          <textarea id="prog-notes" rows="2" placeholder="Short reflection…"></textarea>
+        </div>
+        <button type="button" class="btn-cta btn-cta-secondary btn-cta--log" style="margin-top:12px" onclick="saveHashiraProgressLog()">Save progress</button>
       </section>
-    </section>
-
-    <section class="screen" data-screen="checklist">
-      <div class="screen-top">
-        <button class="btn-header" onclick="location.hash='#dashboard'">Return to Dashboard</button>
       </div>
-      <section class="card">
-        <div class="card-title">Checklist <button class="btn-header" onclick="generateNewSet()">Generate New Set</button></div>
-        <div id="checklist-container"></div>
-      </section>
+
+      <p class="disclosure-preview-line" id="form-cues-preview" aria-live="polite"></p>
+      <details class="disclosure-card disclosure-card--tight disclosure-card--cues" id="details-form-cues">
+        <summary><span class="disclosure-summary-title">Form cues</span><span class="disclosure-summary-hint">Coaching</span></summary>
+        <div class="diagram-box" id="diagram-container"></div>
+        <div class="form-cues-panel">
+          <div class="form-cues-head">
+            <div class="form-cues-title" id="coach-title">—</div>
+            <div class="form-cues-tag" id="coach-tag">—</div>
+          </div>
+          <div class="form-cues-meta">
+            <div><span class="text-dim">Category:</span> <span id="coach-cat">—</span></div>
+            <div><span class="text-dim">Breath:</span> <span id="coach-breath">—</span></div>
+            <div><span class="text-dim">Tempo:</span> <span id="coach-tempo">—</span></div>
+          </div>
+          <div class="form-cues-columns">
+            <div>
+              <div class="form-cues-sub">Do this</div>
+              <ul id="coach-cues" class="form-cues-list"></ul>
+            </div>
+            <div>
+              <div class="form-cues-sub">Avoid</div>
+              <ul id="coach-mistakes" class="form-cues-list form-cues-list--dim"></ul>
+            </div>
+          </div>
+        </div>
+      </details>
     </section>
 
     <section class="screen" data-screen="plan">
       <div class="screen-top">
-        <button class="btn-header" onclick="location.hash='#dashboard'">Return to Dashboard</button>
-      </div>
-      <section class="card">
-        <div class="card-title">Weekly Plan <span class="small-text">discipline-aware</span></div>
-        <div style="background:var(--bg-input); padding:10px; border-radius:14px; border:1px solid var(--border)">
-          <div style="font-size:0.8rem; font-weight:900; margin-bottom:8px">5-Day Builder</div>
-          <div id="plan-builder-ui"></div>
-          <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap">
-            <button class="btn-header" onclick="useTodaysPlan()">Use Today's Plan</button>
-            <button class="btn-header btn-ghost" onclick="resetPlan()">Reset Week</button>
-          </div>
-          <label style="font-size:0.75rem; margin-top:10px; display:block">
-            <input type="checkbox" id="auto-sync-day"> Auto-sync Day Type from weekly plan
-          </label>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="card-title" id="week-label-plan">Weekly Calendar</div>
-        <div class="calendar-row" id="calendar-grid-plan"></div>
-      </section>
-    </section>
-
-    <section class="screen" data-screen="library">
-      <div class="screen-top">
-        <button class="btn-header" onclick="location.hash='#dashboard'">Return to Dashboard</button>
-      </div>
-      <section class="card">
-        <div class="card-title">Exercise Library</div>
-        <div id="library-summary" class="hint"></div>
-        <div id="library-list"></div>
-      </section>
-    </section>
-
-    <section class="screen" data-screen="tools">
-      <div class="screen-top">
-        <button class="btn-header" onclick="location.hash='#dashboard'">Return to Dashboard</button>
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
       </div>
 
-      <section class="card">
-        <div class="card-title">Settings</div>
-
-        <div class="grid-2">
+      <section class="card card--plan-studio">
+        <div class="card-title card-title--soft">Program</div>
+        <p class="section-lede">Discipline, level, and day type drive what the app generates for you.</p>
+        <div class="field-grid">
           <div>
-            <label class="text-dim" style="font-size:0.72rem">Athlete</label>
-            <select id="athlete-select" onchange="toggleAthleteTheme()">
-              <option value="moise">Moise — Hybrid</option>
-              <option value="her">Lindsey — Pilates/Mobility</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="text-dim" style="font-size:0.72rem">Discipline</label>
+            <label class="field-label" for="discipline-select">Discipline</label>
             <select id="discipline-select"></select>
           </div>
-
           <div>
-            <label class="text-dim" style="font-size:0.72rem">Level</label>
+            <label class="field-label" for="level-select">Level</label>
             <select id="level-select">
               <option value="beginner">Beginner</option>
               <option value="intermediate" selected>Intermediate</option>
               <option value="advanced">Advanced</option>
             </select>
           </div>
-
-          <div>
-            <label class="text-dim" style="font-size:0.72rem">Day Type</label>
+          <div class="field-span-2">
+            <label class="field-label" for="day-type-select">Day type</label>
             <select id="day-type-select"></select>
           </div>
         </div>
+      </section>
 
-        <div class="grid-2" style="margin-top:6px">
+      <section class="card card--plan-studio">
+        <div class="card-title card-title--soft">Equipment mode</div>
+        <p class="section-lede">What you have access to — the session builder respects this.</p>
+        <div class="field-grid">
           <div id="equip-gym-wrap" class="hidden">
-            <label class="text-dim" style="font-size:0.72rem">Gym Equipment</label>
+            <label class="field-label" for="equip-gym">Gym</label>
             <select id="equip-gym">
               <option value="full" selected>Full Gym</option>
               <option value="db">Dumbbells Only</option>
@@ -224,34 +597,148 @@
               <option value="minimal">Minimal (DB + bodyweight)</option>
             </select>
           </div>
-
           <div id="equip-cali-wrap" class="hidden">
-            <label class="text-dim" style="font-size:0.72rem">Calisthenics Gear</label>
+            <label class="field-label" for="equip-cali">Calisthenics</label>
             <select id="equip-cali">
               <option value="bar" selected>Pull-up bar available</option>
               <option value="rings">Rings available</option>
               <option value="none">No equipment</option>
             </select>
           </div>
-
           <div id="equip-bd-wrap" class="hidden">
-            <label class="text-dim" style="font-size:0.72rem">Breakdance Mode</label>
+            <label class="field-label" for="equip-bd">Breakdance</label>
             <select id="equip-bd">
               <option value="normal" selected>Normal (all)</option>
               <option value="wristsafe">Wrist-safe (no heavy freezes/power)</option>
             </select>
           </div>
-
           <div id="equip-pil-wrap" class="hidden">
-            <label class="text-dim" style="font-size:0.72rem">Pilates Setup</label>
+            <label class="field-label" for="equip-pil">Pilates</label>
             <select id="equip-pil">
               <option value="mat" selected>Mat Only</option>
               <option value="props">Mat + Props (band/ball)</option>
             </select>
           </div>
+        </div>
+      </section>
 
+      <section class="card card--plan-studio">
+        <div class="card-title card-title--soft">Weekly planner <span class="small-text">discipline-aware</span></div>
+        <p class="section-lede">Shape your week — optional auto-sync pulls today’s focus from the grid.</p>
+        <div class="plan-builder-shell">
+          <div class="plan-builder-kicker">5-day builder</div>
+          <div id="plan-builder-ui"></div>
+          <div class="plan-builder-actions">
+            <button class="btn-header" type="button" onclick="useTodaysPlan()">Use Today’s Plan</button>
+            <button class="btn-header btn-ghost" type="button" onclick="resetPlan()">Reset Week</button>
+          </div>
+          <label class="sync-toggle">
+            <input type="checkbox" id="auto-sync-day"> Auto-sync day type from weekly plan
+          </label>
+        </div>
+      </section>
+
+      <section class="card card--plan-studio card--calendar">
+        <div class="card-title card-title--soft" id="week-label-plan">Week overview</div>
+        <div class="calendar-row" id="calendar-grid-plan"></div>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="presets">
+      <div class="screen-top">
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
+      </div>
+      <div id="presets-root" class="presets-root"></div>
+    </section>
+
+    <section class="screen" data-screen="library">
+      <div class="screen-top">
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
+      </div>
+      <section class="card card--library">
+        <div class="card-title card-title--soft">Exercise library</div>
+        <p class="section-lede section-lede--tight">Browse moves for your current program context.</p>
+        <div class="library-toolbar">
+          <input type="search" class="library-search-placeholder" placeholder="Search (coming soon)" disabled aria-disabled="true">
+          <div class="library-filter-placeholder hint">Filters: use Plan to change discipline, day, and equipment.</div>
+        </div>
+        <div id="library-summary" class="hint"></div>
+        <div id="library-list" class="library-grid"></div>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="profile">
+      <div class="screen-top">
+        <button class="btn-header btn-ghost" type="button" onclick="location.hash='#home'">Home</button>
+      </div>
+
+      <section class="card card--profile">
+        <div class="card-title card-title--soft">Your training profile</div>
+        <p class="section-lede section-lede--tight">Saved on this device only.</p>
+        <div id="user-profile-summary-body"></div>
+      </section>
+
+      <section class="movement-profile-card" id="movement-profile-card">
+        <div class="movement-profile-cover">
+          <span class="movement-profile-monogram" id="movement-profile-monogram">M</span>
+          <button type="button" class="movement-profile-edit" id="movement-profile-edit">Edit movement profile</button>
+        </div>
+        <div class="movement-profile-body" id="movement-profile-body"></div>
+      </section>
+
+      <details class="community-fold" id="movement-profile-fold">
+        <summary>
+          <span><b>Community identity</b><small>Choose what your circles and coaches can see.</small></span>
+          <i>＋</i>
+        </summary>
+        <form id="movement-profile-form" class="community-fold-body">
+          <div class="field-grid">
+            <div>
+              <label class="field-label" for="movement-role">I’m here as</label>
+              <select id="movement-role" name="role">
+                <option value="athlete">Athlete / learner</option>
+                <option value="coach">Coach / trainer</option>
+                <option value="both">Athlete and coach</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="movement-area">General area</label>
+              <input id="movement-area" name="area" maxlength="50" placeholder="Aylmer">
+            </div>
+            <div class="field-span-2">
+              <label class="field-label" for="movement-bio">Movement introduction</label>
+              <textarea id="movement-bio" name="bio" rows="3" maxlength="240" placeholder="What do you train, teach, or want to learn?"></textarea>
+            </div>
+            <div class="field-span-2">
+              <label class="field-label" for="movement-times">Preferred training times</label>
+              <input id="movement-times" name="times" maxlength="100" placeholder="Saturday mornings · weekday evenings">
+            </div>
+          </div>
+          <label class="community-check"><input type="checkbox" id="movement-partners" name="partners"> Open to training-partner requests</label>
+          <button class="btn-cta btn-cta-primary" type="submit">Save profile</button>
+        </form>
+      </details>
+
+      <section class="card card--profile" id="progress-profile-card">
+        <div class="card-title card-title--soft">Training progression</div>
+        <p class="section-lede">Saved from Train — totals and bests compound over time.</p>
+        <div id="progress-profile-body"></div>
+      </section>
+
+      <section class="card card--profile">
+        <div class="card-title card-title--soft">Athlete &amp; theme</div>
+        <label class="field-label" for="athlete-select">Profile</label>
+        <select id="athlete-select" onchange="toggleAthleteTheme()">
+          <option value="moise">Moise — Hybrid</option>
+          <option value="her">Lindsey — Pilates/Mobility</option>
+        </select>
+      </section>
+
+      <details class="disclosure-card disclosure-card--profile">
+        <summary><span class="disclosure-summary-title">Timing &amp; session defaults</span><span class="disclosure-summary-hint">Advanced</span></summary>
+        <div class="field-grid" style="margin-top:10px">
           <div>
-            <label class="text-dim" style="font-size:0.72rem">Joint Status</label>
+            <label class="field-label" for="joint-status">Joint status</label>
             <select id="joint-status">
               <option value="none" selected>No pain</option>
               <option value="mild">Mild stiffness</option>
@@ -259,104 +746,113 @@
               <option value="high">High (protect)</option>
             </select>
           </div>
-        </div>
-
-        <div class="grid-3">
           <div>
-            <label class="text-dim" style="font-size:0.72rem">Auto-load</label>
+            <label class="field-label" for="auto-load">Auto-load timings</label>
             <select id="auto-load">
               <option value="on" selected>ON</option>
               <option value="off">OFF</option>
             </select>
           </div>
           <div>
-            <label class="text-dim" style="font-size:0.72rem">History</label>
+            <label class="field-label" for="history-mode">History</label>
             <select id="history-mode">
               <option value="on" selected>Avoid repeats</option>
               <option value="off">Allow repeats</option>
             </select>
           </div>
           <div>
-            <label class="text-dim" style="font-size:0.72rem">Rounds</label>
-            <input type="number" id="rounds-input" value="3" min="1" max="8">
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <label class="text-dim" style="font-size:0.72rem">Work (sec)</label>
-            <input type="number" id="work-input" value="50" step="5">
-          </div>
-          <div>
-            <label class="text-dim" style="font-size:0.72rem">Rest (sec)</label>
-            <input type="number" id="rest-input" value="60" step="5">
-          </div>
-          <div>
-            <label class="text-dim" style="font-size:0.72rem">Between Rounds (sec)</label>
-            <input type="number" id="round-rest-input" value="105" step="5">
-          </div>
-          <div>
-            <label class="text-dim" style="font-size:0.72rem">Smart Selector</label>
+            <label class="field-label" for="smart-select">Smart selector</label>
             <select id="smart-select">
               <option value="on" selected>ON (rotate daily)</option>
               <option value="off">OFF (show all)</option>
             </select>
           </div>
+          <div>
+            <label class="field-label" for="rounds-input">Rounds</label>
+            <input type="number" id="rounds-input" value="3" min="1" max="8">
+          </div>
+          <div>
+            <label class="field-label" for="work-input">Work (sec)</label>
+            <input type="number" id="work-input" value="50" step="5">
+          </div>
+          <div>
+            <label class="field-label" for="rest-input">Rest (sec)</label>
+            <input type="number" id="rest-input" value="60" step="5">
+          </div>
+          <div>
+            <label class="field-label" for="round-rest-input">Between rounds (sec)</label>
+            <input type="number" id="round-rest-input" value="105" step="5">
+          </div>
         </div>
+      </details>
 
-        <div style="display:flex; gap:10px; margin-bottom:12px; font-size:0.82rem; flex-wrap:wrap">
-          <label><input type="checkbox" id="toggle-sound" checked> Sound</label>
-          <label><input type="checkbox" id="toggle-auto-next" checked> Auto-next</label>
-          <label><input type="checkbox" id="toggle-auto-check" checked> Auto-check</label>
-          <label><input type="checkbox" id="toggle-verse-on-open" checked> Bible verse on open</label>
-          <button class="btn-header" type="button" onclick="showVerse()">Show verse now</button>
+      <section class="card card--profile">
+        <div class="card-title card-title--soft">Training experience</div>
+        <div class="toggle-grid">
+          <label class="toggle-row"><input type="checkbox" id="toggle-sound" checked> Sound</label>
+          <label class="toggle-row"><input type="checkbox" id="toggle-auto-next" checked> Auto-next</label>
+          <label class="toggle-row"><input type="checkbox" id="toggle-auto-check" checked> Auto-check</label>
+          <label class="toggle-row"><input type="checkbox" id="toggle-verse-on-open" checked> Bible verse on open</label>
         </div>
-
-        <div class="hint">Reset Today clears: <b>Today Done</b>, <b>today’s checklist</b>, and <b>resets session to Step 1</b>.</div>
+        <button class="btn-header" type="button" onclick="showVerse()">Show verse now</button>
+        <p class="hint">Reset Today clears Today Done, today’s checklist, and resets the session to step 1.</p>
       </section>
 
-      <section class="card">
-        <div class="card-title">Sleep Cycle Planner <span class="tag tag-rest">90-min cycles</span></div>
-        <div class="grid-2">
-          <div><label class="text-dim" style="font-size:0.72rem">Wake time</label><input type="time" id="sleep-wake" value="06:30"></div>
-          <div><label class="text-dim" style="font-size:0.72rem">Cycles</label>
+      <section class="card card--profile">
+        <div class="card-title card-title--soft">Sleep cycle planner <span class="tag tag-rest">90-min cycles</span></div>
+        <div class="field-grid">
+          <div>
+            <label class="field-label" for="sleep-wake">Wake time</label>
+            <input type="time" id="sleep-wake" value="06:30">
+          </div>
+          <div>
+            <label class="field-label" for="sleep-cycles">Cycles</label>
             <select id="sleep-cycles">
               <option value="4">4 c</option><option value="5" selected>5 c</option><option value="6">6 c</option>
             </select>
           </div>
-        </div>
-        <div style="margin-top:10px"><label class="text-dim" style="font-size:0.72rem">Fall-asleep buffer (min)</label>
-          <select id="sleep-buffer"><option value="10">10</option><option value="15" selected>15</option><option value="20">20</option><option value="30">30</option></select>
+          <div class="field-span-2">
+            <label class="field-label" for="sleep-buffer">Fall-asleep buffer (min)</label>
+            <select id="sleep-buffer"><option value="10">10</option><option value="15" selected>15</option><option value="20">20</option><option value="30">30</option></select>
+          </div>
         </div>
         <div class="chip-container" id="bedtime-chips"></div>
-        <div style="font-size:0.72rem; color:var(--text-dim); margin-top:10px">Tap a chip to copy bedtime.</div>
+        <p class="hint">Tap a chip to copy bedtime.</p>
       </section>
 
-      <section class="card">
-        <div class="card-title">Backup and Reset</div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap">
-          <button class="btn-header" onclick="exportData()">Export Backup</button>
-          <button class="btn-header danger" onclick="resetToday()">Reset Today</button>
+      <section class="card card--profile">
+        <div class="card-title card-title--soft">Backup &amp; reset</div>
+        <p class="hint">Export includes your custom preset library. Older backups still import; preset data is restored only when the JSON file includes a saved preset block.</p>
+        <div class="plan-builder-actions plan-builder-actions--backup">
+          <button class="btn-header" type="button" onclick="exportData()">Export backup</button>
+          <label class="btn-header import-backup-label" for="import-backup-input">Import backup</label>
+          <input type="file" id="import-backup-input" class="hidden" accept="application/json,.json" aria-label="Import backup JSON">
+          <button class="btn-header danger" type="button" onclick="resetToday()">Reset Today</button>
         </div>
       </section>
-    </section>
 
-    <section class="screen" data-screen="about">
-      <div class="screen-top">
-        <button class="btn-header" onclick="location.hash='#dashboard'">Return to Dashboard</button>
-      </div>
-      <section class="card">
-        <div class="card-title">About</div>
+      <section class="card card--profile card--profile-muted">
+        <div class="card-title card-title--soft">About</div>
         <p>Created by Moise T. Sahouo.</p>
-        <p class="hint">HASHIRA HYBRID PRO is a discipline-aware training app covering calisthenics, gym, breakdance, and pilates with timer, checklist persistence, weekly planning, XP progression, sleep planning, and PWA install support.</p>
+        <p class="hint">HASHIRA is a discipline-aware movement world for personal practice, coaching, and small local communities—with guided sessions, field adventures, private circles, chat, movement profiles, progression, planning, and offline PWA support.</p>
       </section>
     </section>
   </main>
 
   <footer class="creator-credit">Created by Moise T. Sahouo</footer>
 
-  <div class="modal-backdrop" id="verse-modal">
-    <div class="modal">
+  <div class="modal-backdrop modal-backdrop--glass" id="session-result-modal" style="display:none">
+    <div class="modal modal--result modal--result-premium">
+      <h3 class="modal-result-title">Session saved</h3>
+      <div id="session-result-modal-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-small primary" onclick="HASHIRA_PROGRESSION.hideSaveFeedback()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop modal-backdrop--glass" id="verse-modal">
+    <div class="modal modal--verse-premium">
       <h3>Daily Word</h3>
       <p id="verse-text"></p>
       <div class="ref" id="verse-ref"></div>
@@ -367,12 +863,22 @@
       </div>
     </div>
   </div>
-
+  <dialog class="circle-sheet" id="circle-sheet">
+    <button class="circle-sheet-close" type="button" id="circle-sheet-close" aria-label="Close">×</button>
+    <div id="circle-sheet-body"></div>
+  </dialog>
+  <script src="../js/jg-theme.js" defer></script>
+  <script src="js/storage-migrate.js" defer></script>
   <script src="js/library.js" defer></script>
   <script src="js/state.js" defer></script>
+  <script src="js/user-profile.js?v=20260725-1" defer></script>
   <script src="js/timer.js" defer></script>
-  <script src="js/ui-router.js" defer></script>
+  <script src="js/presets.js" defer></script>
+  <script src="js/ui-router.js?v=20260725-1" defer></script>
   <script src="js/ui-library.js" defer></script>
+  <script src="js/progression.js" defer></script>
+  <script src="js/expeditions.js" defer></script>
+  <script src="js/community.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>
 </html>

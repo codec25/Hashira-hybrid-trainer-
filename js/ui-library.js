@@ -25,7 +25,7 @@
 
     filtered.forEach((item) => {
       const row = document.createElement('div');
-      row.className = 'checklist-item';
+      row.className = 'library-card';
       const tutorialUrl = item.url || `https://www.youtube.com/results?search_query=${encodeURIComponent(`${discipline} ${item.name} tutorial`)}`;
       row.innerHTML = `
         <div>
